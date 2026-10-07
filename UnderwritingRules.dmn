@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<dmn:definitions xmlns:dmn="https://www.omg.org/spec/DMN/20240513/MODEL/" xmlns="https://kie.apache.org/dmn/_87C3FC09-DF23-4851-BE47-F9E673CE2E46" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:kie="https://kie.org/dmn/extensions/1.0" xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:feel="https://www.omg.org/spec/DMN/20240513/FEEL/" id="_87C3FC09-DF23-4851-BE47-F9E673CE2E46" name="UnderwritingRules" expressionLanguage="https://www.omg.org/spec/DMN/20240513/FEEL/" typeLanguage="https://www.omg.org/spec/DMN/20240513/FEEL/" namespace="https://kie.apache.org/dmn/_87C3FC09-DF23-4851-BE47-F9E673CE2E46">
+  <dmn:extensionElements />
+
+  <!-- Replaces KnockoutRules.drl. BPMN's Gateway_Eligible branches on "Eligible";
+       Decision/Risk Class are left null here when eligible, because
+       Risk Classification (below) sets them for the eligible path. -->
+  <dmn:decision name="Knockout Eligibility" id="_d_knockout_eligibility">
+    <dmn:variable name="Knockout Eligibility" id="_d_knockout_eligibility_var" />
+    <dmn:informationRequirement id="_ir_knockout_age">
+      <dmn:requiredInput href="#_id_applicant_age" />
+    </dmn:informationRequirement>
+    <dmn:decisionTable id="_dt_knockout_eligibility" hitPolicy="UNIQUE" label="Knockout Eligibility">
+      <dmn:input id="_dt_knockout_in_age">
+        <dmn:inputExpression id="_dt_knockout_in_age_expr" typeRef="number">
+          <dmn:text>Applicant Age</dmn:text>
+        </dmn:inputExpression>
+      </dmn:input>
+      <dmn:output id="_dt_knockout_out_eligible" name="Eligible" typeRef="boolean" />
+      <dmn:output id="_dt_knockout_out_decision" name="Decision" typeRef="string" />
+      <dmn:output id="_dt_knockout_out_riskclass" name="Risk Class" typeRef="string" />
+      <dmn:annotation name="Annotations" />
+      <dmn:rule id="_dt_knockout_rule_underage">
+        <dmn:inputEntry id="_dt_knockout_rule_underage_in">
+          <dmn:text>&lt;18</dmn:text>
+        </dmn:inputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_underage_out1">
+          <dmn:text>false</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_underage_out2">
+          <dmn:text>"NOT_ELIGIBLE"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_underage_out3">
+          <dmn:text>"NOT_APPLICABLE"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:annotationEntry>
+          <dmn:text>Underage applicants are not eligible</dmn:text>
+        </dmn:annotationEntry>
+      </dmn:rule>
+      <dmn:rule id="_dt_knockout_rule_adult">
+        <dmn:inputEntry id="_dt_knockout_rule_adult_in">
+          <dmn:text>&gt;=18</dmn:text>
+        </dmn:inputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_adult_out1">
+          <dmn:text>true</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_adult_out2">
+          <dmn:text>null</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_knockout_rule_adult_out3">
+          <dmn:text>null</dmn:text>
+        </dmn:outputEntry>
+        <dmn:annotationEntry>
+          <dmn:text>Adult applicants are eligible</dmn:text>
+        </dmn:annotationEntry>
+      </dmn:rule>
+    </dmn:decisionTable>
+  </dmn:decision>
+
+  <!-- Replaces ClassificationRules.drl. Only reached for eligible (age >= 18)
+       applicants - BPMN's Gateway_Eligible already filters that, matching the
+       original DRL rules' implicit age >= 18 guard. -->
+  <dmn:decision name="Risk Classification" id="_d_risk_classification">
+    <dmn:variable name="Risk Classification" id="_d_risk_classification_var" />
+    <dmn:informationRequirement id="_ir_classification_age">
+      <dmn:requiredInput href="#_id_applicant_age" />
+    </dmn:informationRequirement>
+    <dmn:informationRequirement id="_ir_classification_evidence">
+      <dmn:requiredInput href="#_id_evidence_status" />
+    </dmn:informationRequirement>
+    <dmn:decisionTable id="_dt_risk_classification" hitPolicy="UNIQUE" label="Risk Classification">
+      <dmn:input id="_dt_classify_in_age">
+        <dmn:inputExpression id="_dt_classify_in_age_expr" typeRef="number">
+          <dmn:text>Applicant Age</dmn:text>
+        </dmn:inputExpression>
+      </dmn:input>
+      <dmn:input id="_dt_classify_in_evidence">
+        <dmn:inputExpression id="_dt_classify_in_evidence_expr" typeRef="string">
+          <dmn:text>Evidence Status</dmn:text>
+        </dmn:inputExpression>
+      </dmn:input>
+      <dmn:output id="_dt_classify_out_decision" name="Decision" typeRef="string" />
+      <dmn:output id="_dt_classify_out_riskclass" name="Risk Class" typeRef="string" />
+      <dmn:annotation name="Annotations" />
+      <dmn:rule id="_dt_classify_rule_adverse">
+        <dmn:inputEntry id="_dt_classify_rule_adverse_in1">
+          <dmn:text>&gt;=18</dmn:text>
+        </dmn:inputEntry>
+        <dmn:inputEntry id="_dt_classify_rule_adverse_in2">
+          <dmn:text>"ADVERSE"</dmn:text>
+        </dmn:inputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_adverse_out1">
+          <dmn:text>"DECLINE"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_adverse_out2">
+          <dmn:text>"DECLINED"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:annotationEntry>
+          <dmn:text>Adverse evidence is automatically declined</dmn:text>
+        </dmn:annotationEntry>
+      </dmn:rule>
+      <dmn:rule id="_dt_classify_rule_basic">
+        <dmn:inputEntry id="_dt_classify_rule_basic_in1">
+          <dmn:text>[18..65)</dmn:text>
+        </dmn:inputEntry>
+        <dmn:inputEntry id="_dt_classify_rule_basic_in2">
+          <dmn:text>"CLEAR"</dmn:text>
+        </dmn:inputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_basic_out1">
+          <dmn:text>"ACCEPT"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_basic_out2">
+          <dmn:text>"BASIC"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:annotationEntry>
+          <dmn:text>Adults below 65 with clear evidence are accepted</dmn:text>
+        </dmn:annotationEntry>
+      </dmn:rule>
+      <dmn:rule id="_dt_classify_rule_review">
+        <dmn:inputEntry id="_dt_classify_rule_review_in1">
+          <dmn:text>&gt;=65</dmn:text>
+        </dmn:inputEntry>
+        <dmn:inputEntry id="_dt_classify_rule_review_in2">
+          <dmn:text>"CLEAR"</dmn:text>
+        </dmn:inputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_review_out1">
+          <dmn:text>"REFER"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:outputEntry id="_dt_classify_rule_review_out2">
+          <dmn:text>"REVIEW_REQUIRED"</dmn:text>
+        </dmn:outputEntry>
+        <dmn:annotationEntry>
+          <dmn:text>Older applicants with clear evidence are referred</dmn:text>
+        </dmn:annotationEntry>
+      </dmn:rule>
+    </dmn:decisionTable>
+  </dmn:decision>
+
+  <dmn:inputData name="Applicant Age" id="_id_applicant_age">
+    <dmn:variable name="Applicant Age" id="_id_applicant_age_var" typeRef="number" />
+  </dmn:inputData>
+  <dmn:inputData name="Evidence Status" id="_id_evidence_status">
+    <dmn:variable name="Evidence Status" id="_id_evidence_status_var" typeRef="string" />
+  </dmn:inputData>
+
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="_diagram_underwriting_rules" name="DRG" useAlternativeInputDataShape="false">
+      <di:extension>
+        <kie:ComponentsWidthsExtension>
+          <kie:ComponentWidths dmnElementRef="_dt_knockout_eligibility">
+            <kie:width>60</kie:width>
+            <kie:width>118</kie:width>
+            <kie:width>100</kie:width>
+            <kie:width>120</kie:width>
+            <kie:width>120</kie:width>
+          </kie:ComponentWidths>
+          <kie:ComponentWidths dmnElementRef="_dt_risk_classification">
+            <kie:width>60</kie:width>
+            <kie:width>118</kie:width>
+            <kie:width>118</kie:width>
+            <kie:width>120</kie:width>
+            <kie:width>120</kie:width>
+          </kie:ComponentWidths>
+        </kie:ComponentsWidthsExtension>
+      </di:extension>
+      <dmndi:DMNShape id="_shape_applicant_age" dmnElementRef="_id_applicant_age" isCollapsed="false" isListedInputData="false">
+        <dc:Bounds x="100" y="240" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_evidence_status" dmnElementRef="_id_evidence_status" isCollapsed="false" isListedInputData="false">
+        <dc:Bounds x="100" y="360" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_knockout_eligibility" dmnElementRef="_d_knockout_eligibility" isCollapsed="false" isListedInputData="false">
+        <dc:Bounds x="400" y="100" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_risk_classification" dmnElementRef="_d_risk_classification" isCollapsed="false" isListedInputData="false">
+        <dc:Bounds x="400" y="320" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="_edge_knockout_age" dmnElementRef="_ir_knockout_age" sourceElement="_shape_applicant_age" targetElement="_shape_knockout_eligibility">
+        <di:waypoint x="180" y="240" />
+        <di:waypoint x="400" y="140" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_edge_classification_age" dmnElementRef="_ir_classification_age" sourceElement="_shape_applicant_age" targetElement="_shape_risk_classification">
+        <di:waypoint x="180" y="280" />
+        <di:waypoint x="400" y="360" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_edge_classification_evidence" dmnElementRef="_ir_classification_evidence" sourceElement="_shape_evidence_status" targetElement="_shape_risk_classification">
+        <di:waypoint x="180" y="400" />
+        <di:waypoint x="400" y="360" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</dmn:definitions>
